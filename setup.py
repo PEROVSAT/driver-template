@@ -207,20 +207,37 @@ def install_perovsat_pre_commit_hooks() -> None:
     install_pre_commit_in_repo(ROOT)
 
 
-def format_repository() -> None:
-    if not (ROOT / ".pre-commit-config.yaml").is_file():
+def collect_repository_files() -> list[str]:
+    """Return tracked and untracked files that would be committed."""
+    subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
+    result = subprocess.run(
+        ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    return [line for line in result.stdout.splitlines() if line.strip()]
+
+
+def format_repository(files: list[str]) -> None:
+    if not files or not (ROOT / ".pre-commit-config.yaml").is_file():
         return
 
     print("Applying code style checks...")
-    subprocess.run(["pre-commit", "run", "--all-files"], cwd=ROOT, check=True)
+    subprocess.run(
+        ["pre-commit", "run", "--files", *files],
+        cwd=ROOT,
+        check=True,
+    )
 
 
 def create_initial_commit() -> None:
     if not (ROOT / ".git").is_dir():
         return
 
-    format_repository()
-
+    files = collect_repository_files()
+    format_repository(files)
     subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
 
     staged = subprocess.run(
@@ -233,7 +250,13 @@ def create_initial_commit() -> None:
 
     print(f"Creating initial commit ({INITIAL_COMMIT_MESSAGE!r})...")
     result = subprocess.run(
-        ["git", "commit", "-m", INITIAL_COMMIT_MESSAGE],
+        [
+            "git",
+            "commit",
+            "--no-verify",
+            "-m",
+            INITIAL_COMMIT_MESSAGE,
+        ],
         cwd=ROOT,
         capture_output=True,
         text=True,

@@ -27,9 +27,9 @@ Non-interactive example:
 python3 setup.py --mode mock --device IMU --vendor invensense --driver mpu6050
 ```
 
-By default, `setup.py` removes the template history and runs `git init` for a clean repository. Pass `--no-fresh-git` to keep the clone's git history.
+By default, `setup.py` removes the template history, runs `git init`, applies code style checks, and creates an initial commit titled `Template Clone`. Pass `--no-fresh-git` to keep the clone's git history and skip the initial commit.
 
-After setup, `template/` and `setup.py` are deleted. Commit the rendered scaffold and wire it into `perovsat-app` (see the generated `README.md` checklist).
+After setup, `template/` and `setup.py` are deleted. Wire the new driver into `perovsat-app` (see the generated `README.md` checklist).
 
 ## What gets generated
 

@@ -26,6 +26,7 @@ DEVICE_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
 PEROVSAT_GITHUB_ORG = "github.com/PEROVSAT"
 SKIP_PRE_COMMIT_PROJECTS = frozenset({"imu-driver", "imu-mock-driver"})
 REQUIRED_PYTHON_PACKAGES = ("pre-commit",)
+INITIAL_COMMIT_MESSAGE = "Template Clone"
 
 
 def normalize_compat_part(value: str) -> str:
@@ -206,6 +207,51 @@ def install_perovsat_pre_commit_hooks() -> None:
     install_pre_commit_in_repo(ROOT)
 
 
+def format_repository() -> None:
+    if not (ROOT / ".pre-commit-config.yaml").is_file():
+        return
+
+    print("Applying code style checks...")
+    subprocess.run(["pre-commit", "run", "--all-files"], cwd=ROOT, check=True)
+
+
+def create_initial_commit() -> None:
+    if not (ROOT / ".git").is_dir():
+        return
+
+    format_repository()
+
+    subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
+
+    staged = subprocess.run(
+        ["git", "diff", "--cached", "--quiet"],
+        cwd=ROOT,
+    )
+    if staged.returncode == 0:
+        print("Nothing to commit.")
+        return
+
+    print(f"Creating initial commit ({INITIAL_COMMIT_MESSAGE!r})...")
+    result = subprocess.run(
+        ["git", "commit", "-m", INITIAL_COMMIT_MESSAGE],
+        cwd=ROOT,
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode == 0:
+        return
+
+    if "Please tell me who you are" in (result.stdout + result.stderr):
+        print("Initial commit skipped: git user.name and user.email are not configured.")
+        print("Files are formatted and staged. After configuring git, run:")
+        print(f'  git commit -m "{INITIAL_COMMIT_MESSAGE}"')
+        return
+
+    print(result.stdout, file=sys.stderr)
+    print(result.stderr, file=sys.stderr)
+    sys.exit(result.returncode)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=VALID_MODES)
@@ -215,7 +261,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--subsys", help="Zephyr driver subsystem, default sensor")
     parser.add_argument("--module", help="West module / repository name")
     parser.add_argument("--no-fresh-git", action="store_true",
-                        help="Keep existing .git history instead of re-initializing")
+                        help="Keep existing .git history and skip the initial commit")
     return parser.parse_args()
 
 
@@ -233,6 +279,8 @@ def main() -> None:
     init_fresh_git(args.no_fresh_git)
     ensure_python_packages()
     install_perovsat_pre_commit_hooks()
+    if not args.no_fresh_git:
+        create_initial_commit()
     print(f"Rendered {tokens['__MODULE_NAME__']} ({tokens['__MODE__']})")
 
 

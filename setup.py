@@ -23,6 +23,9 @@ VALID_MODES = ("hardware", "mock")
 SLUG_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 VENDOR_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 DEVICE_RE = re.compile(r"^[A-Z][A-Z0-9_]*$")
+PEROVSAT_GITHUB_ORG = "github.com/PEROVSAT"
+SKIP_PRE_COMMIT_PROJECTS = frozenset({"imu-driver", "imu-mock-driver"})
+REQUIRED_PYTHON_PACKAGES = ("pre-commit",)
 
 
 def normalize_compat_part(value: str) -> str:
@@ -141,6 +144,68 @@ def init_fresh_git(no_fresh_git: bool) -> None:
     subprocess.run(["git", "init"], cwd=ROOT, check=True)
 
 
+def ensure_python_packages(packages: tuple[str, ...] = REQUIRED_PYTHON_PACKAGES) -> None:
+    if not packages:
+        return
+
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", *packages],
+        check=True,
+    )
+
+
+def find_workspace_root() -> Path | None:
+    for parent in ROOT.parents:
+        if (parent / ".west").is_dir():
+            return parent
+    return None
+
+
+def is_perovsat_west_project(name: str, url: str) -> bool:
+    if name in SKIP_PRE_COMMIT_PROJECTS:
+        return False
+    return name == "manifest" or PEROVSAT_GITHUB_ORG in url
+
+
+def install_pre_commit_in_repo(repo: Path) -> None:
+    if not (repo / ".git").is_dir():
+        print(f"Skipping {repo} (not a git repository)")
+        return
+    if not (repo / ".pre-commit-config.yaml").is_file():
+        return
+
+    print(f"Installing pre-commit hooks in {repo}")
+    subprocess.run(["pre-commit", "install"], cwd=repo, check=True)
+
+
+def install_perovsat_pre_commit_hooks() -> None:
+    workspace = find_workspace_root()
+    if workspace is None:
+        install_pre_commit_in_repo(ROOT)
+        return
+
+    result = subprocess.run(
+        ["west", "list", "-f", "{name} {path} {url}"],
+        cwd=workspace,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+
+        name, rel_path, url = line.split(maxsplit=2)
+        if not is_perovsat_west_project(name, url):
+            continue
+
+        install_pre_commit_in_repo(workspace / rel_path)
+
+    # The repo we just created may not be listed in west.yml yet.
+    install_pre_commit_in_repo(ROOT)
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--mode", choices=VALID_MODES)
@@ -166,6 +231,8 @@ def main() -> None:
     finalize_readme()
     cleanup_template()
     init_fresh_git(args.no_fresh_git)
+    ensure_python_packages()
+    install_perovsat_pre_commit_hooks()
     print(f"Rendered {tokens['__MODULE_NAME__']} ({tokens['__MODE__']})")
 
 

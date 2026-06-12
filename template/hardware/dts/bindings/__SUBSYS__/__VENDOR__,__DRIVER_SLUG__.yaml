@@ -1,0 +1,8 @@
+description: __DRIVER_UPPER__ __DEVICE__ device driver
+
+compatible: "__COMPAT__"
+
+include: i2c-device.yaml
+
+properties:
+  # TODO: Declare devicetree properties (mirror struct __DRIVER_SLUG___config).

@@ -1,0 +1,8 @@
+config __KCONFIG_SYM__
+	bool "__DRIVER_UPPER__ __DEVICE__ driver (hardware)"
+	depends on __DT_HAS_ENABLED__
+	select I2C
+	help
+	  Enable the hardware driver for the __DRIVER_UPPER__ __DEVICE__.
+
+	  TODO: Update bus selection (I2C, SPI, etc.) to match your device.

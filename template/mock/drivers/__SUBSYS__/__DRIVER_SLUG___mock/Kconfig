@@ -1,0 +1,5 @@
+config __KCONFIG_SYM__
+	bool "Mock __DRIVER_UPPER__ __DEVICE__ (static test data)"
+	depends on __DT_HAS_ENABLED__
+	help
+	  Enable the mock __DRIVER_UPPER__ __DEVICE__ driver that returns static test data.

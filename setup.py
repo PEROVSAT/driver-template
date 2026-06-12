@@ -207,9 +207,8 @@ def install_perovsat_pre_commit_hooks() -> None:
     install_pre_commit_in_repo(ROOT)
 
 
-def collect_repository_files() -> list[str]:
+def list_repository_files() -> list[str]:
     """Return tracked and untracked files that would be committed."""
-    subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
     result = subprocess.run(
         ["git", "ls-files", "--cached", "--others", "--exclude-standard"],
         cwd=ROOT,
@@ -225,20 +224,27 @@ def format_repository(files: list[str]) -> None:
         return
 
     print("Applying code style checks...")
-    subprocess.run(
-        ["pre-commit", "run", "--files", *files],
-        cwd=ROOT,
-        check=True,
-    )
+    max_attempts = 3
+    for _ in range(max_attempts):
+        result = subprocess.run(
+            ["pre-commit", "run", "--files", *files],
+            cwd=ROOT,
+        )
+        subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
+        if result.returncode == 0:
+            return
+
+        files = list_repository_files()
+
+    sys.exit("Code style checks did not pass after multiple attempts.")
 
 
 def create_initial_commit() -> None:
     if not (ROOT / ".git").is_dir():
         return
 
-    files = collect_repository_files()
-    format_repository(files)
     subprocess.run(["git", "add", "-A"], cwd=ROOT, check=True)
+    format_repository(list_repository_files())
 
     staged = subprocess.run(
         ["git", "diff", "--cached", "--quiet"],

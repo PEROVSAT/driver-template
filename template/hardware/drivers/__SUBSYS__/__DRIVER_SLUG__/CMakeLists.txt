@@ -1,2 +1,3 @@
 zephyr_library()
 zephyr_library_sources(__DRIVER_SLUG__.c)
+zephyr_library_sources_ifdef(CONFIG___KCONFIG_SYM___EMUL __DRIVER_SLUG___emul.c)

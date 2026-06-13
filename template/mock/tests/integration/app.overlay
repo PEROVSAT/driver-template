@@ -1,0 +1,6 @@
+/ {
+	__DRIVER_BASE___0: __DRIVER_BASE___0 {
+		compatible = "__COMPAT__";
+		status = "okay";
+	};
+};

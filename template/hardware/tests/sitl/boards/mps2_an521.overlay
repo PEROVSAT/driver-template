@@ -1,0 +1,18 @@
+/ {
+	soc {
+		i2c_emul: i2c@100 {
+			compatible = "zephyr,i2c-emul-controller";
+			reg = <0x100 4>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+			clock-frequency = <100000>;
+			status = "okay";
+
+			__DRIVER_BASE___0: __DRIVER_BASE___0@48 {
+				compatible = "__COMPAT__";
+				reg = <0x48>;
+				status = "okay";
+			};
+		};
+	};
+};

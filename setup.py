@@ -79,6 +79,7 @@ def build_tokens(mode: str, device: str, vendor: str, driver: str, subsys: str,
     dt_compat = normalize_compat_part(compat).lower()
     dt_has = f"DT_HAS_{normalize_compat_part(compat).upper()}_ENABLED"
     kconfig_sym = f"PEROVSAT_{device}" + ("_MOCK" if mode == "mock" else "")
+    driver_base = driver + ("_mock" if mode == "mock" else "")
 
     return {
         "__MODULE_NAME__": module,
@@ -87,6 +88,7 @@ def build_tokens(mode: str, device: str, vendor: str, driver: str, subsys: str,
         "__SUBSYS__": subsys,
         "__VENDOR__": vendor,
         "__DRIVER_SLUG__": driver,
+        "__DRIVER_BASE__": driver_base,
         "__DRIVER_UPPER__": driver_upper,
         "__COMPAT__": compat,
         "__DT_COMPAT__": dt_compat,

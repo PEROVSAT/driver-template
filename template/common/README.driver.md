@@ -17,7 +17,35 @@ __DRIVER_UPPER__ __DEVICE__ driver (PerovSat Zephyr module).
 - [ ] Create snippet under `snippets/<snippet-name>/` with `CONFIG___KCONFIG_SYM__=y` in `.conf`
 - [ ] Add devicetree overlay with `compatible = "__COMPAT__"`
 
-## Deferred (not yet scaffolded)
+## Emulator (hardware only)
 
-- [ ] Emulator (Emulator API)
-- [ ] Twister unit tests
+- [ ] Fill in `__DRIVER_SLUG___emul.c` register map and transfer logic
+- [ ] Integration backend (`CONFIG___KCONFIG_SYM___EMUL_BACKEND_INTEGRATION`): canned responses for ztest
+- [ ] SITL backend (`CONFIG___KCONFIG_SYM___EMUL_BACKEND_SITL`): socket code goes here for Basilisk
+
+**DBuild contract:** In `perovsat-app`, emulation mode uses the hardware driver west project (not mock), sets `CONFIG_EMUL=y`, `CONFIG_I2C_EMUL=y`, `CONFIG___KCONFIG_SYM___EMUL=y`, and `CONFIG___KCONFIG_SYM___EMUL_BACKEND_SITL=y`, with a board overlay wiring `zephyr,i2c-emul-controller`. Driver-repo integration tests set `CONFIG___KCONFIG_SYM___EMUL_BACKEND_INTEGRATION=y` instead.
+
+## Testing
+
+Run from the driver repo root (requires Zephyr workspace with this module):
+
+```bash
+# Unit tests (native_sim)
+west twister -T tests/unit -p native_sim
+
+# Integration tests (QEMU Cortex-M33)
+west twister -T tests/integration -p mps2/an521
+```
+
+Hardware drivers also scaffold:
+
+```bash
+# SITL image (build-only; Basilisk not available in CI)
+west twister -T tests/sitl -p mps2/an521 --build-only
+```
+
+| Test | Platform | Modes | Notes |
+|------|----------|-------|-------|
+| `tests/unit` | `native_sim` | hardware, mock | Commented example for internal helpers |
+| `tests/integration` | `mps2/an521` | hardware, mock | Hardware uses emulator overlay |
+| `tests/sitl` | `mps2/an521` | hardware only | `build_only: true` in `testcase.yaml` |

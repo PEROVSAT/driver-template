@@ -56,28 +56,32 @@ Each bootstrapped repo is a Zephyr out-of-tree module with:
 - Minimal binding (`include: base.yaml`)
 - Kconfig symbol: `CONFIG_PEROVSAT_<DEVICE>_MOCK`
 
+### Testing scaffold
+
+Each bootstrapped repo includes Twister tests under `tests/`:
+
+- **Unit** (`tests/unit`) — runs on `native_sim`; commented example for internal helpers
+- **Integration** (`tests/integration`) — runs on `mps2/an521` (QEMU Cortex-M33)
+- **SITL** (`tests/sitl`, hardware only) — build-only harness with SITL emulator backend
+
+Hardware drivers also include `__DRIVER_SLUG___emul.c` with a Kconfig choice between integration and SITL emulator backends.
+
 ## Token reference
 
 `setup.py` substitutes these placeholders in paths and file contents:
 
-| Token | Example (hardware) |
-|-------|-------------------|
-| `__MODULE_NAME__` | `mpu6050-driver` |
-| `__DEVICE__` | `IMU` |
-| `__VENDOR__` | `invensense` |
-| `__DRIVER_SLUG__` | `mpu6050` |
-| `__COMPAT__` | `invensense,mpu6050` |
-| `__DT_COMPAT__` | `invensense_mpu6050` |
-| `__KCONFIG_SYM__` | `PEROVSAT_IMU` |
+| Token | Example (hardware) | Example (mock) |
+|-------|-------------------|----------------|
+| `__MODULE_NAME__` | `mpu6050-driver` | `mpu6050-mock-driver` |
+| `__DEVICE__` | `IMU` | `IMU` |
+| `__VENDOR__` | `invensense` | `invensense` |
+| `__DRIVER_SLUG__` | `mpu6050` | `mpu6050` |
+| `__DRIVER_BASE__` | `mpu6050` | `mpu6050_mock` |
+| `__COMPAT__` | `invensense,mpu6050` | `invensense,mpu6050-mock` |
+| `__DT_COMPAT__` | `invensense_mpu6050` | `invensense_mpu6050_mock` |
+| `__KCONFIG_SYM__` | `PEROVSAT_IMU` | `PEROVSAT_IMU_MOCK` |
 
-Mock mode appends `-mock` to the compatible string and `_MOCK` to the Kconfig symbol.
-
-## Not included yet
-
-- Emulator API scaffold
-- Twister unit tests
-
-These will be added in a future revision of the template.
+Mock mode appends `-mock` to the compatible string and `_MOCK` to the Kconfig symbol. `__DRIVER_BASE__` is the driver directory and C symbol prefix (`mpu6050` vs `mpu6050_mock`).
 
 ## Typical workflow
 

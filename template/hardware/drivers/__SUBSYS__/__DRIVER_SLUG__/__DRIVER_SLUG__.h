@@ -17,4 +17,6 @@ struct __DRIVER_SLUG___data {
 	/* TODO: Cached samples and driver state. */
 };
 
+// TODO: Expose any internal private functions you make, so they can be accessed for unit testing
+
 #endif /* __DRIVER_UPPER___H_ */

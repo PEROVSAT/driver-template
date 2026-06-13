@@ -4,5 +4,5 @@ tests:
       - drivers
       - __SUBSYS__
     platform_allow:
-      - mps2/an521
-    # TODO: Hardware drivers also need boards/mps2_an521.overlay (emulator bus).
+      - qemu_cortex_m3
+    # TODO: Hardware drivers also need boards/qemu_cortex_m3.overlay (emulator bus).

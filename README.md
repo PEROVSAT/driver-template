@@ -61,7 +61,7 @@ Each bootstrapped repo is a Zephyr out-of-tree module with:
 Each bootstrapped repo includes Twister tests under `tests/`:
 
 - **Unit** (`tests/unit`) — runs on `native_sim`; commented example for internal helpers
-- **Integration** (`tests/integration`) — runs on `mps2/an521` (QEMU Cortex-M33)
+- **Integration** (`tests/integration`) — runs on `qemu_cortex_m3`
 - **SITL** (`tests/sitl`, hardware only) — build-only harness with SITL emulator backend
 
 Hardware drivers also include `__DRIVER_SLUG___emul.c` with a Kconfig choice between integration and SITL emulator backends.

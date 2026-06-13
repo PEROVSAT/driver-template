@@ -33,19 +33,19 @@ Run from the driver repo root (requires Zephyr workspace with this module):
 # Unit tests (native_sim)
 west twister -T tests/unit -p native_sim
 
-# Integration tests (QEMU Cortex-M33)
-west twister -T tests/integration -p mps2/an521
+# Integration tests (QEMU Cortex-M3)
+west twister -T tests/integration -p qemu_cortex_m3
 ```
 
 Hardware drivers also scaffold:
 
 ```bash
 # SITL image (build-only; Basilisk not available in CI)
-west twister -T tests/sitl -p mps2/an521 --build-only
+west twister -T tests/sitl -p qemu_cortex_m3 --build-only
 ```
 
 | Test | Platform | Modes | Notes |
 |------|----------|-------|-------|
 | `tests/unit` | `native_sim` | hardware, mock | Commented example for internal helpers |
-| `tests/integration` | `mps2/an521` | hardware, mock | Hardware uses emulator overlay |
-| `tests/sitl` | `mps2/an521` | hardware only | `build_only: true` in `testcase.yaml` |
+| `tests/integration` | `qemu_cortex_m3` | hardware, mock | Hardware uses emulator overlay |
+| `tests/sitl` | `qemu_cortex_m3` | hardware only | `build_only: true` in `testcase.yaml` |

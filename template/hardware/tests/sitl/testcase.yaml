@@ -5,6 +5,6 @@ tests:
       - __SUBSYS__
       - sitl
     platform_allow:
-      - mps2/an521
+      - qemu_cortex_m3
     build_only: true
     # Basilisk is not available in CI; verify the SITL image builds only.

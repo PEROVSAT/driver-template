@@ -1,4 +1,4 @@
-description: Mock __DRIVER_UPPER__ __DEVICE__ for testing
+description: Mock __DRIVER_UPPER__ for testing
 
 compatible: "__COMPAT__"
 

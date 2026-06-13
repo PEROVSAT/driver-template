@@ -1,6 +1,6 @@
 # __MODULE_NAME__
 
-__DRIVER_UPPER__ __DEVICE__ driver (PerovSat Zephyr module).
+__DRIVER_UPPER__ driver (PerovSat Zephyr module).
 
 ## Driver TODOs
 
@@ -13,7 +13,7 @@ __DRIVER_UPPER__ __DEVICE__ driver (PerovSat Zephyr module).
 ## App integration (perovsat-app)
 
 - [ ] Add `__MODULE_NAME__` as a west project in `west.yml`
-- [ ] Add `__DEVICE__` entry in `dbuild/device_map.yml` pointing `__MODE__` mode to `__MODULE_NAME__`
+- [ ] Map `__MODULE_NAME__` to the logical device role your application expects (e.g. IMU)
 - [ ] Create snippet under `snippets/<snippet-name>/` with `CONFIG___KCONFIG_SYM__=y` in `.conf`
 - [ ] Add devicetree overlay with `compatible = "__COMPAT__"`
 

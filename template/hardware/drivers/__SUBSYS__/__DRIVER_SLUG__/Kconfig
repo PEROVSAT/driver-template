@@ -1,14 +1,14 @@
 config __KCONFIG_SYM__
-	bool "__DRIVER_UPPER__ __DEVICE__ driver (hardware)"
+	bool "__DRIVER_UPPER__ driver (hardware)"
 	depends on __DT_HAS_ENABLED__
 	select I2C
 	help
-	  Enable the hardware driver for the __DRIVER_UPPER__ __DEVICE__.
+	  Enable the hardware driver for the __DRIVER_UPPER__.
 
 	  TODO: Update bus selection (I2C, SPI, etc.) to match your device.
 
 config __KCONFIG_SYM___EMUL
-	bool "Emulator for __DRIVER_UPPER__ __DEVICE__"
+	bool "Emulator for __DRIVER_UPPER__"
 	depends on __KCONFIG_SYM__ && EMUL
 	default y if EMUL
 	select I2C_EMUL

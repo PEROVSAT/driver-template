@@ -1,4 +1,4 @@
-description: __DRIVER_UPPER__ __DEVICE__ device driver
+description: __DRIVER_UPPER__ device driver
 
 compatible: "__COMPAT__"
 

@@ -2,9 +2,20 @@
 
 #include <errno.h>
 
-/* TODO: Define register addresses and protocol constants. */
-#define __DRIVER_UPPER___REG_SAMPLE 0x00
+/*
+ * Data flow:
+ *   driver init -> lib_init(lib, transfer_fn, dev)   injects bus I/O
+ *   lib fn      -> lib->transfer(ctx, reg, buf, len, read)
+ *   backend     -> __DRIVER_SLUG___transfer() in _hardware.c / _simulation.c / _library_mock.c
+ *
+ * To read a register: lib->transfer(lib->ctx, REG_ADDR, &val, 1, true);
+ */
 
+/* FILL IN: register addresses and protocol constants */
+
+static int __DRIVER_SLUG___lib_transfer(struct __DRIVER_SLUG___lib *lib, uint8_t reg,
+					uint8_t *buf, size_t len, bool read)
+	__attribute__((unused));
 static int __DRIVER_SLUG___lib_transfer(struct __DRIVER_SLUG___lib *lib, uint8_t reg,
 					uint8_t *buf, size_t len, bool read)
 {
@@ -25,28 +36,18 @@ int __DRIVER_SLUG___lib_init(struct __DRIVER_SLUG___lib *lib, __DRIVER_SLUG___tr
 	lib->transfer = transfer;
 	lib->ctx = ctx;
 
-	/* TODO: Probe device and apply initial configuration. */
+	/* FILL IN: probe device and apply initial configuration */
 
 	return 0;
 }
 
-int __DRIVER_SLUG___lib_read_sample(struct __DRIVER_SLUG___lib *lib,
-				    struct __DRIVER_SLUG___sample *sample)
-{
-	uint8_t raw[4];
-	int ret;
-
-	if (lib == NULL || sample == NULL) {
-		return -EINVAL;
-	}
-
-	ret = __DRIVER_SLUG___lib_transfer(lib, __DRIVER_UPPER___REG_SAMPLE, raw, sizeof(raw), true);
-	if (ret < 0) {
-		return ret;
-	}
-
-	/* TODO: Decode raw bytes into a sample according to the device protocol. */
-	sample->value = (int32_t)((raw[0] << 24) | (raw[1] << 16) | (raw[2] << 8) | raw[3]);
-
-	return 0;
-}
+/* FILL IN: protocol functions, e.g.:
+ *
+ * int __DRIVER_SLUG___lib_read_reg(struct __DRIVER_SLUG___lib *lib, uint8_t reg, uint8_t *val)
+ * {
+ *     if (lib == NULL || val == NULL) {
+ *         return -EINVAL;
+ *     }
+ *     return __DRIVER_SLUG___lib_transfer(lib, reg, val, 1, true);
+ * }
+ */

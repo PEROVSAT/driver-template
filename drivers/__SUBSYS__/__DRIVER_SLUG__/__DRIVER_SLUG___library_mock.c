@@ -1,12 +1,14 @@
+/*
+ * Generated boilerplate — do not edit.
+ *
+ * Library-mock backend: static register map transfer and library initialization.
+ */
+
 #include "__DRIVER_SLUG__.h"
 
 #include <string.h>
 
-/*
- * Library mock backend: serve static register data without a real bus.
- *
- * The register map is populated with canned values for integration tests.
- */
+#include <zephyr/device.h>
 
 #define __DRIVER_UPPER___REGISTER_MAP_SIZE 256
 
@@ -21,13 +23,6 @@ static void __DRIVER_SLUG___library_mock_init_once(void)
 	}
 
 	memset(register_map, 0, sizeof(register_map));
-
-	/* TODO: Seed register_map with device-specific defaults. */
-	register_map[0x00] = 0x00;
-	register_map[0x01] = 0x00;
-	register_map[0x02] = 0x00;
-	register_map[0x03] = 0x2A;
-
 	initialized = true;
 }
 
@@ -48,4 +43,11 @@ int __DRIVER_SLUG___transfer(void *ctx, uint8_t reg, uint8_t *buf, size_t len, b
 	}
 
 	return 0;
+}
+
+int __DRIVER_SLUG___backend_init(const struct device *dev)
+{
+	struct __DRIVER_SLUG___data *data = dev->data;
+
+	return __DRIVER_SLUG___lib_init(&data->lib, __DRIVER_SLUG___transfer, (void *)dev);
 }

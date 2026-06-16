@@ -2,7 +2,8 @@
 """Bootstrap a PerovSat Zephyr driver repository from this template.
 
 Usage:
-  python3 setup.py
+  source .venv/bin/activate   # required: use an activated virtual environment
+  python setup.py
 """
 
 from __future__ import annotations
@@ -62,6 +63,31 @@ def success(message: str) -> None:
 
 def warn(message: str) -> None:
     print(f"  {style(message, RED)}")
+
+
+def in_virtualenv() -> bool:
+    """Return True when running inside a venv, virtualenv, or similar isolated env."""
+    if os.environ.get("VIRTUAL_ENV"):
+        return True
+    if getattr(sys, "real_prefix", None) is not None:
+        return True
+    return sys.prefix != sys.base_prefix
+
+
+def require_virtualenv() -> None:
+    if in_virtualenv():
+        return
+
+    print(style("Error: setup.py must be run inside an activated virtual environment.", RED),
+          file=sys.stderr)
+    note(
+        "This script installs pre-commit and other dependencies with pip. Running outside "
+        "a venv can fail partway through after files have already been renamed.\n\n"
+        "Activate your environment first, then rerun:\n"
+        "  source .venv/bin/activate   # or your perovsat-app venv\n"
+        "  python setup.py"
+    )
+    sys.exit(1)
 
 
 def show_prompt_help(name: str, description: str | None = None,
@@ -352,6 +378,8 @@ def gather() -> tuple[str, str, str]:
 
 
 def main() -> None:
+    require_virtualenv()
+
     print(style("PerovSat driver template setup", BOLD))
     info(f"Working directory: {ROOT}")
 

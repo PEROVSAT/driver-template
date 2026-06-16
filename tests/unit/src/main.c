@@ -31,21 +31,30 @@ static int fake_transfer(void *ctx, uint8_t reg, uint8_t *buf, size_t len, bool 
 	return 0;
 }
 
-ZTEST(__DRIVER_SLUG___unit, test_lib_read_sample)
+ZTEST(__DRIVER_SLUG___unit, test_boot)
 {
-	struct __DRIVER_SLUG___lib lib;
-	struct __DRIVER_SLUG___sample sample;
-	int ret;
-
-	memset(fake_register_map, 0, sizeof(fake_register_map));
-	fake_register_map[0x03] = 0x2A;
-
-	ret = __DRIVER_SLUG___lib_init(&lib, fake_transfer, NULL);
-	zassert_ok(ret);
-
-	ret = __DRIVER_SLUG___lib_read_sample(&lib, &sample);
-	zassert_ok(ret);
-	zassert_equal(sample.value, 42);
+	zassert_true(true);
 }
+
+/*
+ * FILL IN: unit tests for lib/__DRIVER_SLUG__/__DRIVER_SLUG___lib.c, e.g.:
+ *
+ * ZTEST(__DRIVER_SLUG___unit, test_lib_read_reg)
+ * {
+ *     struct __DRIVER_SLUG___lib lib;
+ *     uint8_t val;
+ *     int ret;
+ *
+ *     memset(fake_register_map, 0, sizeof(fake_register_map));
+ *     fake_register_map[0x75] = 0x68;
+ *
+ *     ret = __DRIVER_SLUG___lib_init(&lib, fake_transfer, NULL);
+ *     zassert_ok(ret);
+ *
+ *     ret = __DRIVER_SLUG___lib_read_reg(&lib, 0x75, &val);
+ *     zassert_ok(ret);
+ *     zassert_equal(val, 0x68);
+ * }
+ */
 
 ZTEST_SUITE(__DRIVER_SLUG___unit, NULL, NULL, NULL, NULL, NULL);

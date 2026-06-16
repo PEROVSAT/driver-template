@@ -23,12 +23,7 @@ typedef int (*__DRIVER_SLUG___transfer_fn)(void *ctx, uint8_t reg, uint8_t *buf,
 struct __DRIVER_SLUG___lib {
 	__DRIVER_SLUG___transfer_fn transfer;
 	void *ctx;
-	/* TODO: Add protocol/runtime state. */
-};
-
-/** Example sample value returned by the library. */
-struct __DRIVER_SLUG___sample {
-	int32_t value;
+	/* FILL IN: protocol/runtime state */
 };
 
 /**
@@ -43,15 +38,9 @@ struct __DRIVER_SLUG___sample {
 int __DRIVER_SLUG___lib_init(struct __DRIVER_SLUG___lib *lib, __DRIVER_SLUG___transfer_fn transfer,
 			     void *ctx);
 
-/**
- * Read a sample from the device via the injected transfer function.
+/* FILL IN: declare protocol functions that use lib->transfer(), e.g.:
  *
- * @param lib    Initialized library instance.
- * @param sample Output sample.
- *
- * @return 0 on success, negative errno on failure.
+ * int __DRIVER_SLUG___lib_read_reg(struct __DRIVER_SLUG___lib *lib, uint8_t reg, uint8_t *val);
  */
-int __DRIVER_SLUG___lib_read_sample(struct __DRIVER_SLUG___lib *lib,
-				    struct __DRIVER_SLUG___sample *sample);
 
 #endif /* __DRIVER_UPPER___LIB_H_ */

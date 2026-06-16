@@ -7,7 +7,8 @@ Template repository for PerovSat Zephyr out-of-tree drivers. Clone this repo to 
 ```bash
 git clone git@github.com:PEROVSAT/driver-template.git my-new-driver
 cd my-new-driver
-python3 setup.py
+source .venv/bin/activate   # required — setup.py exits early without a venv
+python setup.py
 ```
 
 `setup.py` will ask for:

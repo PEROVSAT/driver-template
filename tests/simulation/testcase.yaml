@@ -1,0 +1,10 @@
+tests:
+  __MODULE_NAME__.simulation:
+    tags:
+      - drivers
+      - __SUBSYS__
+      - simulation
+    platform_allow:
+      - qemu_cortex_m3
+    build_only: true
+    # Basilisk is not available in CI; verify the simulation image builds only.

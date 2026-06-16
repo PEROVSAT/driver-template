@@ -1,5 +1,0 @@
-description: Mock __DRIVER_UPPER__ for testing
-
-compatible: "__COMPAT__"
-
-include: base.yaml

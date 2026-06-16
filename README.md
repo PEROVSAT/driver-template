@@ -1,6 +1,6 @@
 # driver-template
 
-Template repository for PerovSat Zephyr out-of-tree drivers. Clone this repo to create a new hardware or mock driver with boilerplate already in place.
+Template repository for PerovSat Zephyr out-of-tree drivers. Clone this repo to create a new device driver with boilerplate already in place.
 
 ## Quick start
 
@@ -14,22 +14,38 @@ python3 setup.py
 
 | Prompt | Example | Notes |
 |--------|---------|-------|
-| mode | `hardware` or `mock` | Which variant to generate |
-| logical device name | `IMU` | Used in Kconfig symbols and `dbuild/device_map.yml` |
-| vendor | `invensense` | Devicetree compatible prefix (not `zephyr`) |
-| driver slug | `mpu6050` | Lowercase identifier used in filenames and C symbols |
-| subsystem | `sensor` | Zephyr driver subdirectory (default: `sensor`) |
-| module name | `mpu6050-driver` | West project name (auto-suggested) |
+| device-model | `mpu6050` | Lowercase slug for filenames, C symbols, and compatible |
+| devicetree-vendor | `invensense` | Devicetree compatible prefix (not `zephyr`) |
+| zephyr-subsystem | `sensor` | Zephyr driver subdirectory (default: `sensor`) |
 
-Non-interactive example:
+After setup, tokenized paths and file contents are renamed in place, `README.driver.md` is promoted to `README.md`, and `setup.py` is removed. Wire the new driver into `perovsat-app` (see the generated `README.md` checklist).
 
-```bash
-python3 setup.py --mode mock --device IMU --vendor invensense --driver mpu6050
+## Architecture
+
+Every device repo follows the same **library-wrapper** model inspired by [amulib](https://github.com/the-aerospace-corporation/amulib):
+
+- **`lib/<device>/`** — portable protocol logic with an injected byte-transfer function pointer
+- **`drivers/<subsystem>/<device>/`** — thin Zephyr wrapper that binds the library and exposes the driver API
+- **Four backends** selected at build time via Kconfig
+
+```mermaid
+flowchart TD
+    app[Application] --> api[Zephyr driver API]
+    api -->|public mock| hard[Hardcoded returns]
+    api -->|other backends| lib[Device library]
+    lib --> hw[Hardware transfer]
+    lib --> sim[Simulation socket]
+    lib --> lm[Library mock registers]
 ```
 
-By default, `setup.py` removes the template history, runs `git init`, applies code style checks, and creates an initial commit titled `Template Clone`. Pass `--no-fresh-git` to keep the clone's git history and skip the initial commit.
+### Backends
 
-After setup, `template/` and `setup.py` are deleted. Wire the new driver into `perovsat-app` (see the generated `README.md` checklist).
+| Backend | Library | Description |
+|---------|---------|-------------|
+| **Hardware** | Yes | Real bus (I2C by default; UART for NDA devices) |
+| **Simulation** | Yes | Socket to Basilisk for SITL |
+| **Library mock** | Yes | Static register map via injected transfer fn |
+| **Public mock** | No | Hardcoded API returns; default and NDA-safe |
 
 ## What gets generated
 
@@ -37,56 +53,34 @@ Each bootstrapped repo is a Zephyr out-of-tree module with:
 
 - `zephyr/module.yml` — west module declaration
 - Top-level `Kconfig` and `CMakeLists.txt`
-- Driver source under `drivers/<subsystem>/<driver>/`
+- Device library under `lib/<driver>/`
+- Zephyr wrapper under `drivers/<subsystem>/<driver>/`
+- Three transfer backends: `_hardware.c`, `_simulation.c`, `_library_mock.c`
 - Devicetree binding under `dts/bindings/<subsystem>/`
-- `DT_DRV_COMPAT`, `DEVICE_DT_INST_DEFINE`, and `DT_INST_FOREACH_STATUS_OKAY`
+- Twister tests under `tests/{unit,public_mock,library_mock,simulation}/`
 - Inline `TODO` comments marking where device-specific logic goes
-
-### Hardware variant
-
-- I2C bus scaffold (swap bus/header as needed)
-- `struct <driver>_config` and `struct <driver>_data` in the header
-- `init()` stub and per-instance device registration
-- Kconfig symbol: `CONFIG_PEROVSAT_<DEVICE>`
-
-### Mock variant
-
-- `struct <driver>_mock_data` in the header
-- `init()` stub and per-instance device registration
-- Minimal binding (`include: base.yaml`)
-- Kconfig symbol: `CONFIG_PEROVSAT_<DEVICE>_MOCK`
-
-### Testing scaffold
-
-Each bootstrapped repo includes Twister tests under `tests/`:
-
-- **Unit** (`tests/unit`) — runs on `native_sim`; commented example for internal helpers
-- **Integration** (`tests/integration`) — runs on `qemu_cortex_m3`
-- **SITL** (`tests/sitl`, hardware only) — build-only harness with SITL emulator backend
-
-Hardware drivers also include `__DRIVER_SLUG___emul.c` with a Kconfig choice between integration and SITL emulator backends.
 
 ## Token reference
 
 `setup.py` substitutes these placeholders in paths and file contents:
 
-| Token | Example (hardware) | Example (mock) |
-|-------|-------------------|----------------|
-| `__MODULE_NAME__` | `mpu6050-driver` | `mpu6050-mock-driver` |
-| `__DEVICE__` | `IMU` | `IMU` |
-| `__VENDOR__` | `invensense` | `invensense` |
-| `__DRIVER_SLUG__` | `mpu6050` | `mpu6050` |
-| `__DRIVER_BASE__` | `mpu6050` | `mpu6050_mock` |
-| `__COMPAT__` | `invensense,mpu6050` | `invensense,mpu6050-mock` |
-| `__DT_COMPAT__` | `invensense_mpu6050` | `invensense_mpu6050_mock` |
-| `__KCONFIG_SYM__` | `PEROVSAT_IMU` | `PEROVSAT_IMU_MOCK` |
-
-Mock mode appends `-mock` to the compatible string and `_MOCK` to the Kconfig symbol. `__DRIVER_BASE__` is the driver directory and C symbol prefix (`mpu6050` vs `mpu6050_mock`).
+| Token | Example |
+|-------|---------|
+| `__MODULE_NAME__` | `mpu6050-driver` |
+| `__VENDOR__` | `invensense` |
+| `__DRIVER_SLUG__` | `mpu6050` |
+| `__DRIVER_UPPER__` | `MPU6050` |
+| `__COMPAT__` | `invensense,mpu6050` |
+| `__DT_COMPAT__` | `invensense_mpu6050` |
+| `__KCONFIG_SYM__` | `PEROVSAT_MPU6050` |
+| `__SUBSYS__` | `sensor` |
 
 ## Typical workflow
 
-1. Clone `driver-template` twice — once for the public mock repo, once for the hardware repo (if NDA/private).
-2. Run `setup.py` in each with the appropriate `--mode`.
-3. Fill in the `TODO` items in the generated driver.
-4. Add the new west projects and dbuild snippets in `perovsat-app`.
-5. Build with `west dbuild -b <board>`.
+1. Clone `driver-template` once per physical device.
+2. Run `setup.py` and answer the prompts.
+3. Implement protocol logic in `lib/<device>/` and the Zephyr API in `drivers/`.
+4. Add the new west project and dbuild snippets in `perovsat-app`.
+5. Build with `west dbuild -b <board>` and select the backend via Kconfig.
+
+For NDA devices, move `lib/<device>/` to a private west module later; the public repo continues to build with public mock.

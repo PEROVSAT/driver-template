@@ -1,0 +1,9 @@
+zephyr_library()
+zephyr_library_sources(__DRIVER_SLUG__.c)
+zephyr_library_sources_ifdef(CONFIG___KCONFIG_SYM___BACKEND_HARDWARE __DRIVER_SLUG___hardware.c)
+zephyr_library_sources_ifdef(CONFIG___KCONFIG_SYM___BACKEND_SIMULATION __DRIVER_SLUG___simulation.c)
+zephyr_library_sources_ifdef(CONFIG___KCONFIG_SYM___BACKEND_LIBRARY_MOCK __DRIVER_SLUG___library_mock.c)
+zephyr_library_sources_ifdef(CONFIG___KCONFIG_SYM___USES_LIB
+			     ${ZEPHYR_CURRENT_MODULE_DIR}/lib/__DRIVER_SLUG__/__DRIVER_SLUG___lib.c)
+zephyr_include_directories_ifdef(CONFIG___KCONFIG_SYM___USES_LIB
+				 ${ZEPHYR_CURRENT_MODULE_DIR}/lib/__DRIVER_SLUG__)

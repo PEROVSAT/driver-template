@@ -1,8 +1,0 @@
-tests:
-  __MODULE_NAME__.unit:
-    tags:
-      - drivers
-      - __SUBSYS__
-    platform_allow:
-      - native_sim
-    # TODO: Add harness/filter options as needed.

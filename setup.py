@@ -15,18 +15,18 @@ import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
-TEMPLATE = ROOT / "template"
 
-VALID_MODES = ("hardware", "mock")
 SLUG_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 VENDOR_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 PEROVSAT_GITHUB_ORG = "github.com/PEROVSAT"
 SKIP_PRE_COMMIT_PROJECTS = frozenset({"imu-driver", "imu-mock-driver"})
 REQUIRED_PYTHON_PACKAGES = ("pre-commit",)
 
+SETUP_SCRIPT = Path(__file__).name
+SKIP_PATHS = frozenset({".git", "__pycache__", SETUP_SCRIPT, "README.md"})
+
 USE_COLOR = not os.environ.get("NO_COLOR") and sys.stdout.isatty()
 
-# ANSI styles (disabled when USE_COLOR is false).
 RESET = "\033[0m"
 BOLD = "\033[1m"
 DIM = "\033[2m"
@@ -94,63 +94,18 @@ def normalize_compat_part(value: str) -> str:
     return re.sub(r"[^A-Za-z0-9]", "_", value)
 
 
-def module_name(chip: str, mode: str) -> str:
-    return f"{chip}-mock-driver" if mode == "mock" else f"{chip}-driver"
-
-
-def gather() -> tuple[str, str, str, str]:
-    note(
-        "Name the repository after the physical device, not a logical role like IMU.\n"
-        "Map logical roles in perovsat-app."
-    )
-    print()
-
-    chip = prompt(
-        "device-model",
-        description="Lowercase slug used in filenames, C symbols, and devicetree compatible",
-        examples="mpu6050",
-        validator=lambda v: bool(SLUG_RE.match(v)),
-    ).lower()
-    vendor = prompt(
-        "devicetree-vendor",
-        description="Vendor prefix in compatible strings (not zephyr)",
-        examples="invensense",
-        validator=lambda v: bool(VENDOR_RE.match(v)),
-    )
-    mode = prompt(
-        "driver-variant",
-        default="hardware",
-        description="Real device driver or static test-data mock",
-        examples="hardware, mock",
-        validator=lambda v: v in VALID_MODES,
-    )
-    subsys = prompt(
-        "zephyr-subsystem",
-        default="sensor",
-        description="Driver subdirectory under drivers/",
-        examples="sensor, gpio",
-        validator=lambda v: bool(SLUG_RE.match(v)),
-    )
-
-    return mode, vendor, chip, subsys
-
-
-def build_tokens(mode: str, vendor: str, chip: str, subsys: str,
-                 module: str) -> dict[str, str]:
-    compat = f"{vendor},{chip}" + ("-mock" if mode == "mock" else "")
+def build_tokens(vendor: str, chip: str, subsys: str, module: str) -> dict[str, str]:
+    compat = f"{vendor},{chip}"
     driver_upper = normalize_compat_part(chip).upper()
     dt_compat = normalize_compat_part(compat).lower()
     dt_has = f"DT_HAS_{normalize_compat_part(compat).upper()}_ENABLED"
-    kconfig_sym = f"PEROVSAT_{driver_upper}" + ("_MOCK" if mode == "mock" else "")
-    driver_base = chip + ("_mock" if mode == "mock" else "")
+    kconfig_sym = f"PEROVSAT_{driver_upper}"
 
     return {
         "__MODULE_NAME__": module,
-        "__MODE__": mode,
         "__SUBSYS__": subsys,
         "__VENDOR__": vendor,
         "__DRIVER_SLUG__": chip,
-        "__DRIVER_BASE__": driver_base,
         "__DRIVER_UPPER__": driver_upper,
         "__COMPAT__": compat,
         "__DT_COMPAT__": dt_compat,
@@ -160,38 +115,77 @@ def build_tokens(mode: str, vendor: str, chip: str, subsys: str,
 
 
 def substitute(text: str, tokens: dict[str, str]) -> str:
-    """Replace tokens longest-key-first to avoid partial substitutions."""
     for key in sorted(tokens, key=len, reverse=True):
         text = text.replace(key, tokens[key])
     return text
 
 
-def render_variant(mode: str, tokens: dict[str, str]) -> None:
-    sources = [TEMPLATE / "common", TEMPLATE / mode]
+def should_skip(path: Path) -> bool:
+    if path.name in SKIP_PATHS:
+        return True
+    return any(part in SKIP_PATHS for part in path.parts)
+
+
+def collect_tokenized_files() -> list[Path]:
+    files: list[Path] = []
+    for path in sorted(ROOT.rglob("*")):
+        if not path.is_file():
+            continue
+        if should_skip(path.relative_to(ROOT)):
+            continue
+        files.append(path)
+    return files
+
+
+def prune_empty_token_dirs() -> None:
+    token_dirs = [p for p in ROOT.rglob("*") if p.is_dir() and "__" in p.name]
+    token_dirs.sort(key=lambda p: len(p.parts), reverse=True)
+    for directory in token_dirs:
+        if directory.is_dir() and not any(directory.iterdir()):
+            directory.rmdir()
+            print(f"  {style(f'removed empty {directory.relative_to(ROOT)}', DIM)}")
+
+
+def rename_tokenized_paths(tokens: dict[str, str]) -> None:
+    """Rename files whose paths contain tokens (deepest paths first)."""
+    files = collect_tokenized_files()
+    moves: list[tuple[Path, Path]] = []
+
+    for src in files:
+        rel = src.relative_to(ROOT)
+        new_rel = Path(substitute(str(rel), tokens))
+        if new_rel != rel:
+            moves.append((src, ROOT / new_rel))
+
+    moves.sort(key=lambda item: len(item[0].parts), reverse=True)
+
+    for src, dest in moves:
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        if src.exists():
+            src.rename(dest)
+            print(f"  {style(str(src.relative_to(ROOT)), DIM)} -> "
+                  f"{style(str(dest.relative_to(ROOT)), CYAN)}")
+
+    prune_empty_token_dirs()
+
+
+def substitute_file_contents(tokens: dict[str, str]) -> int:
     file_count = 0
 
-    for src in sources:
-        if not src.is_dir():
-            sys.exit(f"Missing template directory: {src}")
+    for path in collect_tokenized_files():
+        rel = path.relative_to(ROOT)
+        try:
+            original = path.read_text(encoding="utf-8")
+        except UnicodeDecodeError:
+            continue
 
-        for path in sorted(src.rglob("*")):
-            if path.is_dir():
-                continue
-
-            rel = path.relative_to(src)
-            dest = ROOT / substitute(str(rel), tokens)
-            dest.parent.mkdir(parents=True, exist_ok=True)
-
-            try:
-                dest.write_text(substitute(path.read_text(encoding="utf-8"), tokens),
-                                encoding="utf-8")
-            except UnicodeDecodeError:
-                shutil.copy2(path, dest)
-
+        updated = substitute(original, tokens)
+        if updated != original:
+            path.write_text(updated, encoding="utf-8")
             file_count += 1
-            print(f"  {style(str(dest.relative_to(ROOT)), DIM)}")
+            print(f"  {style(str(rel), DIM)}")
 
-    success(f"Rendered {file_count} files from template/{mode}/ and template/common/")
+    return file_count
 
 
 def finalize_readme() -> None:
@@ -201,10 +195,9 @@ def finalize_readme() -> None:
         success("Promoted README.driver.md to README.md")
 
 
-def cleanup_template() -> None:
-    shutil.rmtree(TEMPLATE)
+def cleanup_setup() -> None:
     Path(__file__).unlink(missing_ok=True)
-    info("Removed template/ and setup.py")
+    info("Removed setup.py")
 
 
 def get_git_remotes() -> dict[str, str]:
@@ -248,6 +241,13 @@ def remove_git_metadata() -> None:
         shutil.rmtree(git_dir)
 
 
+def find_workspace_root() -> Path | None:
+    for parent in ROOT.parents:
+        if (parent / ".west").is_dir():
+            return parent
+    return None
+
+
 def init_fresh_git() -> None:
     git_dir = ROOT / ".git"
     if find_workspace_root() is not None and git_dir.exists():
@@ -274,13 +274,6 @@ def ensure_python_packages(packages: tuple[str, ...] = REQUIRED_PYTHON_PACKAGES)
         [sys.executable, "-m", "pip", "install", *packages],
         check=True,
     )
-
-
-def find_workspace_root() -> Path | None:
-    for parent in ROOT.parents:
-        if (parent / ".west").is_dir():
-            return parent
-    return None
 
 
 def is_perovsat_west_project(name: str, url: str) -> bool:
@@ -325,34 +318,63 @@ def install_perovsat_pre_commit_hooks() -> None:
 
         install_pre_commit_in_repo(workspace / rel_path)
 
-    # The repo we just created may not be listed in west.yml yet.
     install_pre_commit_in_repo(ROOT)
 
 
-def main() -> None:
-    if not TEMPLATE.is_dir():
-        sys.exit("template/ not found. Has this repo already been bootstrapped?")
+def gather() -> tuple[str, str, str]:
+    note(
+        "Name the repository after the physical device, not a logical role like IMU.\n"
+        "Map logical roles in perovsat-app."
+    )
+    print()
 
+    chip = prompt(
+        "device-model",
+        description="Lowercase slug used in filenames, C symbols, and devicetree compatible",
+        examples="mpu6050",
+        validator=lambda v: bool(SLUG_RE.match(v)),
+    ).lower()
+    vendor = prompt(
+        "devicetree-vendor",
+        description="Vendor prefix in compatible strings (not zephyr)",
+        examples="invensense",
+        validator=lambda v: bool(VENDOR_RE.match(v)),
+    )
+    subsys = prompt(
+        "zephyr-subsystem",
+        default="sensor",
+        description="Driver subdirectory under drivers/",
+        examples="sensor, gpio",
+        validator=lambda v: bool(SLUG_RE.match(v)),
+    )
+
+    return vendor, chip, subsys
+
+
+def main() -> None:
     print(style("PerovSat driver template setup", BOLD))
     info(f"Working directory: {ROOT}")
 
     step("Collecting driver configuration")
-    mode, vendor, chip, subsys = gather()
-    module = module_name(chip, mode)
+    vendor, chip, subsys = gather()
+    module = f"{chip}-driver"
     print()
-    info(f"device-model={style(chip, CYAN)}, vendor={style(vendor, CYAN)}, "
-         f"variant={style(mode, YELLOW)}")
+    info(f"device-model={style(chip, CYAN)}, vendor={style(vendor, CYAN)}")
     info(f"subsys={style(subsys, CYAN)}, module={style(module, CYAN)}")
-    tokens = build_tokens(mode, vendor, chip, subsys, module)
+    tokens = build_tokens(vendor, chip, subsys, module)
 
-    step("Rendering template files")
-    render_variant(mode, tokens)
+    step("Substituting tokens in file contents")
+    content_count = substitute_file_contents(tokens)
+    success(f"Updated {content_count} files")
+
+    step("Renaming tokenized paths")
+    rename_tokenized_paths(tokens)
 
     step("Finalizing README")
     finalize_readme()
 
-    step("Cleaning up template files")
-    cleanup_template()
+    step("Cleaning up setup script")
+    cleanup_setup()
 
     step("Initializing fresh git repository")
     init_fresh_git()
@@ -365,7 +387,6 @@ def main() -> None:
 
     step("Setup complete")
     print(f"  {style('Module:', BOLD)} {style(tokens['__MODULE_NAME__'], CYAN)}")
-    print(f"  {style('Mode:', BOLD)}   {style(tokens['__MODE__'], YELLOW)}")
     note("Next: wire the new driver into perovsat-app (see README.md)")
 
 

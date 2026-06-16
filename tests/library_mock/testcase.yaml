@@ -1,0 +1,7 @@
+tests:
+  __MODULE_NAME__.library_mock:
+    tags:
+      - drivers
+      - __SUBSYS__
+    platform_allow:
+      - qemu_cortex_m3

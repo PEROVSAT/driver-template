@@ -2,7 +2,6 @@
 #define __DRIVER_UPPER___H_
 
 #include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
 
 #include "__DRIVER_SLUG___api.h"
 
@@ -12,7 +11,7 @@
 
 /** Read-only configuration, populated from devicetree. */
 struct __DRIVER_SLUG___config {
-	// struct i2c_dt_spec i2c;
+	const struct device *bus;
 	/* FILL IN: additional fields mirroring your devicetree binding properties */
 };
 

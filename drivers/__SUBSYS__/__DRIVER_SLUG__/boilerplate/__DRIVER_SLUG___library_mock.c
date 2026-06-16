@@ -6,6 +6,7 @@
 
 #include "__DRIVER_SLUG__.h"
 
+#include <errno.h>
 #include <string.h>
 
 #include <zephyr/device.h>

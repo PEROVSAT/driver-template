@@ -19,6 +19,7 @@ ROOT = Path(__file__).resolve().parent
 
 SLUG_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
 VENDOR_RE = re.compile(r"^[a-z][a-z0-9_-]*$")
+VALID_BUSES = frozenset({"i2c", "spi", "uart"})
 PEROVSAT_GITHUB_ORG = "github.com/PEROVSAT"
 SKIP_PRE_COMMIT_PROJECTS = frozenset({"imu-driver", "imu-mock-driver"})
 REQUIRED_PYTHON_PACKAGES = ("pre-commit",)
@@ -347,7 +348,36 @@ def install_perovsat_pre_commit_hooks() -> None:
     install_pre_commit_in_repo(ROOT)
 
 
-def gather() -> tuple[str, str, str]:
+def select_bus_variant(bus: str) -> None:
+    """Install the selected hardware-bus variant and remove unused variants."""
+    driver_root = ROOT / "drivers" / "__SUBSYS__" / "__DRIVER_SLUG__"
+    variant_dir = driver_root / "bus_variants" / bus
+
+    if not variant_dir.is_dir():
+        warn(f"Bus variant not found: {variant_dir.relative_to(ROOT)}")
+        sys.exit(1)
+
+    installs = {
+        "hardware.c": driver_root / "boilerplate" / "__DRIVER_SLUG___hardware.c",
+        "wrapper.c": driver_root / "boilerplate" / "__DRIVER_SLUG__.c",
+        "wrapper.h": driver_root / "__DRIVER_SLUG__.h",
+        "Kconfig": driver_root / "Kconfig",
+        "binding.yaml": ROOT / "dts" / "bindings" / "__SUBSYS__" / "__VENDOR__,__DRIVER_SLUG__.yaml",
+    }
+
+    for src_name, dest in installs.items():
+        src = variant_dir / src_name
+        dest.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copy2(src, dest)
+        print(f"  {style(str(src.relative_to(ROOT)), DIM)} -> "
+              f"{style(str(dest.relative_to(ROOT)), CYAN)}")
+
+    bus_variants_root = driver_root / "bus_variants"
+    shutil.rmtree(bus_variants_root)
+    print(f"  {style(f'removed {bus_variants_root.relative_to(ROOT)}', DIM)}")
+
+
+def gather() -> tuple[str, str, str, str]:
     note(
         "Name the repository after the physical device, not a logical role like IMU.\n"
         "Map logical roles in perovsat-app."
@@ -373,8 +403,15 @@ def gather() -> tuple[str, str, str]:
         examples="sensor, gpio",
         validator=lambda v: bool(SLUG_RE.match(v)),
     )
+    bus = prompt(
+        "hardware-bus",
+        default="i2c",
+        description="Physical bus connecting the device",
+        examples="i2c, spi, uart",
+        validator=lambda v: v in VALID_BUSES,
+    )
 
-    return vendor, chip, subsys
+    return vendor, chip, subsys, bus
 
 
 def main() -> None:
@@ -384,12 +421,15 @@ def main() -> None:
     info(f"Working directory: {ROOT}")
 
     step("Collecting driver configuration")
-    vendor, chip, subsys = gather()
+    vendor, chip, subsys, bus = gather()
     module = f"{chip}-driver"
     print()
     info(f"device-model={style(chip, CYAN)}, vendor={style(vendor, CYAN)}")
-    info(f"subsys={style(subsys, CYAN)}, module={style(module, CYAN)}")
+    info(f"subsys={style(subsys, CYAN)}, bus={style(bus, CYAN)}, module={style(module, CYAN)}")
     tokens = build_tokens(vendor, chip, subsys, module)
+
+    step("Installing bus variant")
+    select_bus_variant(bus)
 
     step("Substituting tokens in file contents")
     content_count = substitute_file_contents(tokens)

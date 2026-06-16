@@ -1,11 +1,9 @@
 config __KCONFIG_SYM__
 	bool "__DRIVER_UPPER__ driver"
 	depends on __DT_HAS_ENABLED__
-	select I2C
+	select SERIAL
 	help
 	  Enable the __DRIVER_UPPER__ Zephyr driver module.
-
-	  TODO: For UART-based devices, replace I2C selection with SERIAL.
 
 if __KCONFIG_SYM__
 

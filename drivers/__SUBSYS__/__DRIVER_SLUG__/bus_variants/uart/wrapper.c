@@ -10,7 +10,6 @@
 #include "__DRIVER_SLUG__.h"
 
 #include <zephyr/device.h>
-#include <zephyr/drivers/i2c.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(__DRIVER_SLUG__, CONFIG_LOG_DEFAULT_LEVEL);
@@ -26,7 +25,7 @@ static int __DRIVER_SLUG___init(const struct device *dev)
 #define __DRIVER_UPPER___INIT(inst)                                                                \
 	static struct __DRIVER_SLUG___data __DRIVER_SLUG___data_##inst;                            \
 	static const struct __DRIVER_SLUG___config __DRIVER_SLUG___config_##inst = {               \
-		.i2c = I2C_DT_SPEC_INST_GET(inst),                                                 \
+		.bus = DEVICE_DT_GET(DT_INST_BUS(inst)),                                            \
 	};                                                                                         \
 	DEVICE_DT_INST_DEFINE(inst, __DRIVER_SLUG___init, NULL, &__DRIVER_SLUG___data_##inst,      \
 			      &__DRIVER_SLUG___config_##inst, POST_KERNEL,                           \

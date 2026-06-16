@@ -1,0 +1,45 @@
+config __KCONFIG_SYM__
+	bool "__DRIVER_UPPER__ driver"
+	depends on __DT_HAS_ENABLED__
+	select I2C
+	help
+	  Enable the __DRIVER_UPPER__ Zephyr driver module.
+
+if __KCONFIG_SYM__
+
+choice
+	prompt "__DRIVER_UPPER__ backend"
+	default __KCONFIG_SYM___BACKEND_PUBLIC_MOCK
+
+config __KCONFIG_SYM___BACKEND_HARDWARE
+	bool "Hardware (real device over bus)"
+	select __KCONFIG_SYM___USES_LIB
+	help
+	  Use the device library with a real bus transfer function.
+
+config __KCONFIG_SYM___BACKEND_SIMULATION
+	bool "Simulation (socket to Basilisk)"
+	select __KCONFIG_SYM___USES_LIB
+	help
+	  Use the device library with a socket transfer function for SITL.
+
+config __KCONFIG_SYM___BACKEND_LIBRARY_MOCK
+	bool "Library mock (static register data via device library)"
+	select __KCONFIG_SYM___USES_LIB
+	help
+	  Use the device library with a static register-map transfer function.
+
+config __KCONFIG_SYM___BACKEND_PUBLIC_MOCK
+	bool "Public mock (hardcoded data, no library required)"
+	help
+	  Return hardcoded data from the Zephyr driver API without linking the
+	  device library. Safe for CI and repos without NDA library access.
+
+endchoice
+
+config __KCONFIG_SYM___USES_LIB
+	bool
+	help
+	  Hidden symbol: set when a backend requires the device library.
+
+endif

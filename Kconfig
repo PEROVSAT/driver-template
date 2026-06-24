@@ -1,1 +1,1 @@
-rsource "drivers/__SUBSYS__/__DRIVER_SLUG__/Kconfig"
+rsource "src/Kconfig"

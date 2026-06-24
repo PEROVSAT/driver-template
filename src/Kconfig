@@ -1,7 +1,8 @@
 config __KCONFIG_SYM__
 	bool "__DRIVER_UPPER__ driver"
 	depends on __DT_HAS_ENABLED__
-	select SERIAL
+	# Add bus dependency here:
+	# select I2C
 	help
 	  Enable the __DRIVER_UPPER__ Zephyr driver module.
 
@@ -13,19 +14,16 @@ choice
 
 config __KCONFIG_SYM___BACKEND_HARDWARE
 	bool "Hardware (real device over bus)"
-	select __KCONFIG_SYM___USES_LIB
 	help
 	  Use the device library with a real bus transfer function.
 
 config __KCONFIG_SYM___BACKEND_SIMULATION
 	bool "Simulation (socket to Basilisk)"
-	select __KCONFIG_SYM___USES_LIB
 	help
 	  Use the device library with a socket transfer function for SITL.
 
 config __KCONFIG_SYM___BACKEND_LIBRARY_MOCK
 	bool "Library mock (static register data via device library)"
-	select __KCONFIG_SYM___USES_LIB
 	help
 	  Use the device library with a static register-map transfer function.
 
@@ -36,10 +34,5 @@ config __KCONFIG_SYM___BACKEND_PUBLIC_MOCK
 	  device library. Safe for CI and repos without NDA library access.
 
 endchoice
-
-config __KCONFIG_SYM___USES_LIB
-	bool
-	help
-	  Hidden symbol: set when a backend requires the device library.
 
 endif

@@ -19,7 +19,6 @@ struct device;
  */
 int __DRIVER_SLUG___transfer(void *ctx, uint8_t reg, uint8_t *buf, size_t len, bool read);
 
-
 /**
  * Initialize transport for this device instance.
  *

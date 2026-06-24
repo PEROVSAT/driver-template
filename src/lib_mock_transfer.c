@@ -11,7 +11,6 @@
 
 static uint8_t register_map[__DRIVER_UPPER___REGISTER_MAP_SIZE];
 
-
 int __DRIVER_SLUG___transfer(void *ctx, uint8_t reg, uint8_t *buf, size_t len, bool read)
 {
 	ARG_UNUSED(ctx);
@@ -28,7 +27,6 @@ int __DRIVER_SLUG___transfer(void *ctx, uint8_t reg, uint8_t *buf, size_t len, b
 
 	return 0;
 }
-
 
 int __DRIVER_SLUG___transfer_init(const struct device *dev)
 {

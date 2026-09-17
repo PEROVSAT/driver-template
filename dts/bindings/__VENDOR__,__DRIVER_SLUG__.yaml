@@ -2,8 +2,9 @@ description: __DRIVER_UPPER__ device driver
 
 compatible: "__COMPAT__"
 
-# FILL IN: include bus binding if the device sits on a bus, e.g.:
-# include: i2c-device.yaml
+# FILL IN when bringing up hardware, e.g.:
+#   include: i2c-device.yaml
+#   on-bus: i2c
 
 properties:
-  # FILL IN: devicetree properties (mirror struct __DRIVER_SLUG___config fields)
+  # FILL IN: mirror fields of __DRIVER_SLUG___config_t

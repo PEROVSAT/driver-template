@@ -420,7 +420,13 @@ def main() -> None:
 
     step("Setup complete")
     print(f"  {style('Module:', BOLD)} {style(tokens['__MODULE_NAME__'], CYAN)}")
-    note("Next: wire the new driver into perovsat-app (see README.md)")
+    note(
+        f"Device API is include/{chip}.h — add functions there, then lib/ and mock/.\n"
+        f"Bus functions are declared in lib/{chip}_bus.h and defined at link time.\n"
+        "Do not add API functions in src/.\n"
+        "Unit tests: west twister -T tests/unit -p native_sim\n"
+        "REPL:       west build -b native_sim samples/repl && west build -t run"
+    )
 
 
 if __name__ == "__main__":

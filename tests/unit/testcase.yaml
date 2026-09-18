@@ -3,4 +3,5 @@ tests:
     tags:
       - drivers
     platform_allow:
-      - native_sim
+      - qemu_cortex_m3
+      - rpi_pico2/rp2350a/m33

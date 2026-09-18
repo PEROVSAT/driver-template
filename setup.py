@@ -424,8 +424,8 @@ def main() -> None:
         f"Device API is include/{chip}.h — add functions there, then lib/ and mock/.\n"
         f"Bus functions are declared in lib/{chip}_bus.h and defined at link time.\n"
         "Do not add API functions in src/.\n"
-        "Unit tests: west twister -T tests/unit -p native_sim\n"
-        "REPL:       west build -b native_sim samples/repl && west build -t run"
+        "Unit tests: west twister -T tests/unit -p qemu_cortex_m3\n"
+        "REPL:       west build -b rpi_pico2/rp2350a/m33 samples/repl && west flash -r uf2"
     )
 
 

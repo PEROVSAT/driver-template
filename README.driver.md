@@ -39,19 +39,25 @@ App code:
 __DRIVER_SLUG___t *dev = __DRIVER_SLUG___from_dev(DEVICE_DT_GET(DT_ALIAS(__DRIVER_SLUG__)));
 ```
 
+Do not call `__DRIVER_SLUG___init()` from the app. Driver init already ran at boot.
+
 ## Tests and REPL
 
-From a west workspace that includes this module:
+From a west workspace that includes this module and `hal_rpi_pico`:
 
 ```bash
-west twister -T tests/unit -p native_sim
-west build -b native_sim __MODULE_NAME__/samples/repl
-west build -t run
+west twister -T tests/unit -p qemu_cortex_m3
+west build -b rpi_pico2/rp2350a/m33 __MODULE_NAME__/samples/repl
+west flash -r uf2
 ```
+
+The REPL sample defaults to Pico 2 and the UF2 runner. `west flash` with no `-r` uses OpenOCD (SWD probe). UF2 needs BOOTSEL: unplug USB, hold BOOTSEL, plug in, wait for the `RP2350` volume, then flash. After reset the shell is `/dev/cu.usbmodem*` (not a `cu.USB_*` name). Close any serial session before the next BOOTSEL cycle.
+
+The sample overlay keeps the device node and USB CDC console in `app.overlay`. Do not put CDC only in `boards/*.overlay` — that replaces `app.overlay` and drops `DT_HAS_*`.
 
 Unit tests compile `lib/` only. Uncomment the example in `tests/unit` and add
 `__DRIVER_SLUG___transfer` there when tests need a bus. They do not enable the
-Zephyr driver.
+Zephyr driver. Twister also allows `rpi_pico2/rp2350a/m33` for on-desk runs.
 
 ## App integration (perovsat-app)
 

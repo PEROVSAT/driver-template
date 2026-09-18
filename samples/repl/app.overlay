@@ -3,8 +3,19 @@
 		__DRIVER_SLUG__ = &__DRIVER_SLUG___0;
 	};
 
+	chosen {
+		zephyr,console = &cdc_acm_uart0;
+		zephyr,shell-uart = &cdc_acm_uart0;
+	};
+
 	__DRIVER_SLUG___0: __DRIVER_SLUG__ {
 		compatible = "__COMPAT__";
 		status = "okay";
+	};
+};
+
+&zephyr_udc0 {
+	cdc_acm_uart0: cdc_acm_uart0 {
+		compatible = "zephyr,cdc-acm-uart";
 	};
 };
